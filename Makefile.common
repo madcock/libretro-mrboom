@@ -44,6 +44,12 @@ ifeq ($(STATIC_LINKING), 1)
    ifeq ($(platform), psl1ght)
       SOURCES_C += $(LIBRETRO_COMM_DIR)/audio/audio_mixer.c
    endif
+   ifeq ($(platform), sf2000)
+      SOURCES_C += $(LIBRETRO_COMM_DIR)/audio/audio_mixer.c \
+                   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
+				   $(LIBRETRO_COMM_DIR)/audio/conversion/float_to_s16.c \
+				   $(CORE_DIR)/libretro/ibxm/ibxm.c
+   endif
 else
    ifeq ($(LIBSDL),)
       SOURCES_C += $(LIBRETRO_COMM_DIR)/file/file_path.c \
