@@ -117,20 +117,6 @@ void retro_init(void)
 
 #define NB_VARS_SYSTEMS    6
    assert(vars_systems.size() == NB_VARS_SYSTEMS);
-   // Add the System core options
-   struct retro_variable vars[NB_VARS_SYSTEMS + 1];      // + 1 for the empty ending retro_variable
-   for (i = 0; i < NB_VARS_SYSTEMS; i++) {
-      if (vars[i].key == NULL) {
-         log_cb(RETRO_LOG_INFO, "retro_variable empty key index %d\n", i);
-         continue;
-      }
-      if (vars[i].value == NULL) {
-         log_cb(RETRO_LOG_INFO, "retro_variable empty value for key '%s'\n", vars[i].key);
-         continue;
-      }
-      log_cb(RETRO_LOG_INFO, "retro_variable (SYSTEM)    { '%s', '%s' }\n", vars[i].key, vars[i].value);
-
-   }
 
    joypad.device    = RETRO_DEVICE_JOYPAD;
    joypad.port_min  = 0;
@@ -380,40 +366,49 @@ void update_vga(bpp_t *buf, unsigned stride)
 {
    static bpp_t  matrixPalette[NB_COLORS_PALETTE];
    unsigned      x, y;
+   unsigned      xy = 0;
    int           z    = 0;
+   int           zz    = 0;
    bpp_t *       line = buf;
 
    do
    {
 #ifdef WANT_BPP32
-      matrixPalette[z / 3]  = ((m.vgaPalette[z+0] << 2) | (m.vgaPalette[z+0] >> 4)) << 16;
-      matrixPalette[z / 3] |= ((m.vgaPalette[z+1] << 2) | (m.vgaPalette[z+1] >> 4)) << 8;
-      matrixPalette[z / 3] |= ((m.vgaPalette[z+2] << 2) | (m.vgaPalette[z+2] >> 4)) << 0;
+      matrixPalette[zz]  = ((m.vgaPalette[z+0] << 2) | (m.vgaPalette[z+0] >> 4)) << 16;
+      matrixPalette[zz] |= ((m.vgaPalette[z+1] << 2) | (m.vgaPalette[z+1] >> 4)) << 8;
+      matrixPalette[zz] |= ((m.vgaPalette[z+2] << 2) | (m.vgaPalette[z+2] >> 4)) << 0;
 #elif defined(ABGR1555)
-      matrixPalette[z / 3]  = (m.vgaPalette[z+0] >> 1) << 0;
-      matrixPalette[z / 3] |= (m.vgaPalette[z+1] >> 1) << 5;
-      matrixPalette[z / 3] |= (m.vgaPalette[z+2] >> 1) << 10;
+      matrixPalette[zz]  = (m.vgaPalette[z+0] >> 1) << 0;
+      matrixPalette[zz] |= (m.vgaPalette[z+1] >> 1) << 5;
+      matrixPalette[zz] |= (m.vgaPalette[z+2] >> 1) << 10;
 #else
-      matrixPalette[z / 3]  = (m.vgaPalette[z+0] >> 1) << 11;
-      matrixPalette[z / 3] |= (m.vgaPalette[z+1] >> 0) << 5;
-      matrixPalette[z / 3] |= (m.vgaPalette[z+2] >> 1) << 0;
+      matrixPalette[zz]  = (m.vgaPalette[z+0] >> 1) << 11;
+      matrixPalette[zz] |= (m.vgaPalette[z+1] >> 0) << 5;
+      matrixPalette[zz] |= (m.vgaPalette[z+2] >> 1) << 0;
 #endif
       z += 3;
+      zz++;
    } while (z != NB_COLORS_PALETTE * 3);
-
+   if (m.affiche_pal != 1)
+   {
    for (y = 0; y < HEIGHT; y++, line += stride)
    {
       for (x = 0; x < WIDTH; x++)
-      {
-         if (y < HEIGHT)
-         {
-            if (m.affiche_pal != 1)
-            {
-               m.vgaRam[x + y * WIDTH] = m.buffer[x + y * WIDTH];
-            }
-            line[x] = matrixPalette[m.vgaRam[x + y * WIDTH]];
-         }
+      {           
+            m.vgaRam[xy] = m.buffer[xy];
+            line[x] = matrixPalette[m.buffer[xy]];            
+            xy++;
       }
+   }
+   } else {
+   for (y = 0; y < HEIGHT; y++, line += stride)
+   {
+      for (x = 0; x < WIDTH; x++)
+      {           
+            line[x] = matrixPalette[m.vgaRam[xy]];
+            xy++;
+      }
+   }
    }
 }
 
