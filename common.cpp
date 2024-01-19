@@ -611,6 +611,7 @@ bool mrboom_init()
    m.tected[20] = GAME_VERSION[0];
    m.tected[21] = GAME_VERSION[1];
    m.tected[22] = GAME_VERSION[2];
+
 #ifndef LOAD_FROM_FILES
    m.dataloaded = 1;
    log_debug("Mrboom: Crc16 heap: %d\n", crc16(m.heap, HEAP_SIZE));
@@ -861,14 +862,6 @@ void mrboom_sound(void)
                {
                   log_error("Error playing sample id %d.<%s> Mix_AllocateChannels=%d\n", a1, Mix_GetError(), Mix_AllocateChannels(-1));
                }
-            }
-#endif
-
-#ifdef __LIBRETRO__
-            // special message on failing to start a game...
-            if (a1 == 14)
-            {
-               show_message("Press A to join!");
             }
 #endif
             ignoreForAbit[a1] = ignoreForAbitFlag[a1];
@@ -1143,7 +1136,12 @@ void mrboom_update_input(int keyid, int playerNumber, int state, bool isIA)
    if (startPressed && selectPressed)
    {
       pressESC();
+      if (inTheMenu())
+      {
+         m.executionFinished = true;
+      }
    }
+
 #endif
 }
 
