@@ -401,7 +401,6 @@ void updateKeyboard(Uint8 scancode, int state)
    case SDL_SCANCODE_RCTRL:
    case SDL_SCANCODE_RGUI:
    case SDL_SCANCODE_KP_0:
-      log_info("button_b %d i:%d\n", state, nb_dyna - 1);
       updateInput(button_b, nb_dyna - 1, state, false);
       break;
 
@@ -959,6 +958,7 @@ void pollEvent()
 void loop()
 {
 
+   Uint64 start = SDL_GetPerformanceCounter();
    if (isGameActive())
    {
       beeingPlaying++;
@@ -1023,7 +1023,6 @@ void loop()
 
    pollEvent();
 
-   mrboom_deal_with_autofire();
    mrboom_loop();
 
 #ifdef DEBUG
@@ -1138,6 +1137,13 @@ void loop()
       SDL_RenderClear(renderer);
       SDL_RenderCopy(renderer, texture, NULL, NULL);
       SDL_RenderPresent(renderer);
+      Uint64 end = SDL_GetPerformanceCounter();
+      float floored = floor(16.666f - (end - start) / (float)SDL_GetPerformanceFrequency() * 1000.0f) -1;
+	   // Cap to 60 FPS
+      if (floored > 0.0) {
+         SDL_Delay(floored);
+      }
+
    }
 
 #ifdef __EMSCRIPTEN__
@@ -1240,7 +1246,6 @@ int main(int argc, char **argv)
               {"mapping", required_argument, 0, 'm'},
               {"sex", no_argument, 0, 's'},
               {"color", no_argument, 0, 'c'},
-              {"noautofire", no_argument, 0, 'n'},
               {"version", no_argument, 0, 'v'},
               {"debugtraces", required_argument, 0, 'd'},
               {"cheat", no_argument, 0, '1'},
@@ -1320,11 +1325,6 @@ int main(int argc, char **argv)
             sdl2_fx_volume = DEFAULT_SDL2_FX_VOLUME;
          }
          log_info("-f option given. Set fx volume to %d.\n", sdl2_fx_volume);
-         break;
-
-      case 'n':
-         log_info("-n option given. No autofire\n");
-         setAutofire(false);
          break;
 
       case 'v':
@@ -1526,7 +1526,7 @@ if (!fullscreen) {
       }
       SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
-      renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+      renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
       if (!renderer)
       {
          log_error("Couldn't set create renderer: %s\n", SDL_GetError());
